@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="CCSICTLOGOCROP.png">
+    <title>Adding Member</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .form-input:focus, .form-select:focus {
+            outline: none; border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 flex items-center justify-center min-h-screen p-4">
+
+    <div class="relative w-full max-w-lg mx-auto">
+        <a href="dashboard.html" class="absolute top-4 left-0 -translate-y-1/2 sm:top-8 sm:left-[-150px] flex items-center gap-2 bg-white text-gray-600 px-4 py-2 rounded-lg shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/></svg>
+            Dashboard
+        </a>
+        
+        <div class="bg-white p-8 sm:p-12 rounded-2xl shadow-lg w-full">
+            <div class="text-center mb-10">
+                <div class="mx-auto w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center mb-4 border border-gray-300 overflow-hidden">
+                    <img src="CCSICTLOGOCROP.png" alt="Company Logo" class="w-full h-full object-cover">
+                </div>
+                <h1 class="text-3xl font-bold text-gray-900">Adding Faculty Member</h1>
+            </div>
+
+            <form id="facultyForm">
+                <div class="space-y-6">
+                    <div>
+                        <label for="fullName" class="block text-sm font-medium text-gray-600 mb-1">Full Name</label>
+                        <input type="text" id="fullName" class="form-input w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg transition-all" required>
+                    </div>
+                    <div>
+                        <label for="userType" class="block text-sm font-medium text-gray-600 mb-1">User Type</label>
+                        <select id="userType" class="form-select w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg appearance-none transition-all" required>
+                            <option value="" disabled selected>Select a user type</option>
+                            <option value="faculty">Faculty</option>
+                            <option value="officer">Officer</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-600 mb-1">Email</label>
+                        <input type="email" id="email" class="form-input w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg transition-all" required>
+                    </div>
+                    <div>
+                        <label for="assignPassword" class="block text-sm font-medium text-gray-600 mb-1">Assign Password to User</label>
+                        <input type="password" id="assignPassword" class="form-input w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg transition-all" required>
+                    </div>
+                    <div>
+                        <label for="adminPassword" class="block text-sm font-medium text-gray-600 mb-1">Enter Administrator Password</label>
+                        <input type="password" id="adminPassword" class="form-input w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg transition-all" required>
+                    </div>
+                </div>
+
+                <div id="messageArea" class="mt-6 text-center text-sm h-5"></div>
+
+                <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <button type="button" id="clearButton" class="w-full py-3 px-4 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-colors">Clear</button>
+                    <button type="submit" class="w-full py-3 px-4 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors">Enter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+   <script>
+        const facultyForm = document.getElementById('facultyForm');
+        const clearButton = document.getElementById('clearButton');
+        const messageArea = document.getElementById('messageArea');
+
+        const supabaseUrl = 'https://dqtictujkhxultwoaqaw.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRxdGljdHVqa2h4dWx0d29hcWF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgyOTU1MjksImV4cCI6MjA3Mzg3MTUyOX0.DsnJZ9ylCBlTeVp_KdgRq71cV0f7MojOfuWg1MVGS5I';
+        
+        // CORRECTED INITIALIZATION WITH A NEW VARIABLE NAME
+        // We use the global 'supabase' object to create our client, named 'supabaseClient'
+        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+
+        facultyForm.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const submitButton = facultyForm.querySelector('button[type="submit"]');
+            displayMessage('', 'none');
+            
+            const fullName = document.getElementById('fullName').value;
+            const userType = document.getElementById('userType').value;
+            const email = document.getElementById('email').value;
+            const assignPassword = document.getElementById('assignPassword').value;
+            const adminPassword = document.getElementById('adminPassword').value;
+
+            submitButton.disabled = true;
+            submitButton.textContent = 'Verifying...';
+
+            try {
+                // STEP 1: VERIFY THE ADMIN PASSWORD
+                // Use the new variable name 'supabaseClient'
+                const { data: adminCheck, error: adminError } = await supabaseClient
+                    .from('admins')
+                    .select('password')
+                    .eq('password', adminPassword);
+
+                if (adminError) throw adminError;
+
+                if (adminCheck && adminCheck.length > 0) {
+                    submitButton.textContent = 'Adding Member...';
+
+                    // STEP 2: ADD THE NEW MEMBER
+                    // Use the new variable name 'supabaseClient'
+                    const { data: insertData, error: insertError } = await supabaseClient
+                        .from('members')
+                        .insert([{
+                            full_name: fullName,
+                            user_type: userType,
+                            email: email,
+                            password: assignPassword
+                        }]);
+                    
+                    if (insertError) throw insertError;
+
+                    displayMessage('Faculty Member Added Successfully!', 'success');
+                    facultyForm.reset();
+
+                } else {
+                    displayMessage('Incorrect Administrator Password.', 'error');
+                }
+
+            } catch (error) {
+                displayMessage(`An error occurred: ${error.message}`, 'error');
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Enter';
+            }
+        });
+
+        clearButton.addEventListener('click', () => {
+            facultyForm.reset();
+            displayMessage('', 'none');
+        });
+
+        function displayMessage(message, type) {
+            messageArea.textContent = message;
+            messageArea.className = 'mt-6 text-center text-sm h-5';
+            if (type === 'success') messageArea.classList.add('text-green-600');
+            else if (type === 'error') messageArea.classList.add('text-red-600');
+        }
+    </script>
+</body>
+</html>
